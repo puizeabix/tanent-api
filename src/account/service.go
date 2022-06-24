@@ -3,6 +3,7 @@ package account
 import (
 	"context"
 	"errors"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -14,16 +15,22 @@ type Service interface {
 	UpdateAccount(ctx context.Context, id string, acc Account) (*Account, error)
 	GetAccount(ctx context.Context, id string) (*Account, error)
 	ListAccounts(ctx context.Context) ([]Account, error)
-	//	ActivateAccount(ctx context.Context, id string) error
-	//	DeactivateAccount(ctx context.Context, id string) error
+	ActivateAccount(ctx context.Context, id string) error
+	DeactivateAccount(ctx context.Context, id string) error
 }
 
 type Account struct {
+	Id       primitive.ObjectID `json:"id,omitempty" bson:"_id,omitempty"`
+	Name     string             `json:"name" bson:"name"`
+	IsActive bool               `json:"is-active" bson:"isActive"`
+	Created  time.Time          `json:"created" bson:"created"`
+	Modified time.Time          `json:"modified" bson:"modified"`
 }
 
 var (
 	ErrAccountNotFound = errors.New("Account not found")
 	ErrNotImplemented  = errors.New("Not implemented")
+	ErrInconsitentData = errors.New("Data state is becoming inconsitent state")
 )
 
 type accountService struct {
@@ -102,4 +109,32 @@ func (s *accountService) ListAccounts(ctx context.Context) ([]Account, error) {
 	}
 
 	return result, nil
+}
+
+func (s *accountService) ActivateAccount(ctx context.Context, id string) error {
+	return s.updateActive(ctx, id, true)
+}
+
+func (s *accountService) DeactivateAccount(ctx context.Context, id string) error {
+	return s.updateActive(ctx, id, false)
+}
+
+func (s *accountService) updateActive(ctx context.Context, id string, isActive bool) error {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	filter := bson.D{{Key: "_id", Value: oid}}
+	updated := bson.D{{Key: "isActive", Value: isActive}}
+	res, err := s.collection.UpdateOne(ctx, filter, updated)
+	if err != nil {
+		return err
+	}
+
+	if res.UpsertedID == nil {
+		return ErrAccountNotFound
+	}
+
+	return nil
 }
