@@ -9,6 +9,10 @@ import (
 	"os/signal"
 	"syscall"
 
+	kitprometheus "github.com/go-kit/kit/metrics/prometheus"
+	stdprometheus "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/go-kit/kit/log"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -46,13 +50,27 @@ func main() {
 		panic(err)
 	}
 
-	//fieldKeys := []string{"method"}
+	fieldKeys := []string{"method"}
 
 	var as account.Service
 	{
 		as = account.NewAccountService(col)
 		as = account.NewLoggingMiddleware(logger, as)
-
+		as = account.NewInstrumentingMiddleware(
+			kitprometheus.NewCounterFrom(stdprometheus.CounterOpts{
+				Namespace: "api",
+				Subsystem: "tanent",
+				Name:      "request_count",
+				Help:      "Number of requests recieved",
+			}, fieldKeys),
+			kitprometheus.NewSummaryFrom(stdprometheus.SummaryOpts{
+				Namespace: "api",
+				Subsystem: "tanent",
+				Name:      "request_latency_microseconds",
+				Help:      "Total duration of requests in microseconds.",
+			}, fieldKeys),
+			as,
+		)
 	}
 
 	var h http.Handler
@@ -64,6 +82,8 @@ func main() {
 
 	mux.Handle("/tanent/v1/", h)
 	http.Handle("/", accessControl(mux))
+
+	http.Handle("/metrics", promhttp.Handler())
 
 	errs := make(chan error)
 	go func() {
