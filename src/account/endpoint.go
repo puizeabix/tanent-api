@@ -37,7 +37,8 @@ type createAccountResponse struct {
 	Err error  `json:"err,omitempty"`
 }
 
-func (r createAccountResponse) error() error { return r.Err }
+func (r createAccountResponse) error() error      { return r.Err }
+func (r createAccountResponse) data() interface{} { return r }
 
 func makeCreateAccountEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
@@ -62,7 +63,8 @@ type getAccountResponse struct {
 	Err     error `json:"err,omitempty"`
 }
 
-func (r getAccountResponse) error() error { return r.Err }
+func (r getAccountResponse) error() error      { return r.Err }
+func (r getAccountResponse) data() interface{} { return r.Account }
 
 func makeGetAccountEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
@@ -82,7 +84,8 @@ type updateAccountResponse struct {
 	Err     error `json:"err,omitempty"`
 }
 
-func (r updateAccountResponse) error() error { return r.Err }
+func (r updateAccountResponse) error() error      { return r.Err }
+func (r updateAccountResponse) data() interface{} { return r.Account }
 
 func makeUpdateAccountEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
@@ -100,7 +103,8 @@ type listAccountsResponse struct {
 	Err      error     `json:"err,omitempty"`
 }
 
-func (r listAccountsResponse) error() error { return r.Err }
+func (r listAccountsResponse) error() error      { return r.Err }
+func (r listAccountsResponse) data() interface{} { return r.Accounts }
 
 func makeListAccountsEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, _ interface{}) (interface{}, error) {
@@ -117,7 +121,8 @@ type activateAccountResponse struct {
 	Err error `json:"err,omitempty"`
 }
 
-func (r activateAccountResponse) error() error { return r.Err }
+func (r activateAccountResponse) error() error      { return r.Err }
+func (r activateAccountResponse) data() interface{} { return nil }
 
 func makeActiveAccountEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
@@ -135,7 +140,8 @@ type deactivateAccountResponse struct {
 	Err error `json:"err,omitempty"`
 }
 
-func (r deactivateAccountResponse) error() error { return r.Err }
+func (r deactivateAccountResponse) error() error      { return r.Err }
+func (r deactivateAccountResponse) data() interface{} { return nil }
 
 func makeDeactivateAccountEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {

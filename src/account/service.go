@@ -126,15 +126,15 @@ func (s *accountService) updateActive(ctx context.Context, id string, isActive b
 	}
 
 	filter := bson.D{{Key: "_id", Value: oid}}
-	updated := bson.D{{Key: "isActive", Value: isActive}}
+	updated := bson.D{{Key: "$set", Value: bson.M{"isActive": isActive, "modified": time.Now()}}}
 	res, err := s.collection.UpdateOne(ctx, filter, updated)
 	if err != nil {
 		return err
 	}
 
-	if res.UpsertedID == nil {
-		return ErrAccountNotFound
+	if res.ModifiedCount > 0 {
+		return nil
 	}
 
-	return nil
+	return ErrAccountNotFound
 }

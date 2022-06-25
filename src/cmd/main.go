@@ -51,6 +51,7 @@ func main() {
 	var as account.Service
 	{
 		as = account.NewAccountService(col)
+		as = account.NewLoggingMiddleware(logger, as)
 
 	}
 

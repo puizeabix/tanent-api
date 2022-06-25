@@ -129,13 +129,18 @@ type errorer interface {
 	error() error
 }
 
+type accessor interface {
+	data() interface{}
+}
+
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
 	if e, ok := response.(errorer); ok && e.error() != nil {
 		encodeError(ctx, e.error(), w)
 		return nil
 	}
+	d := response.(accessor)
 	w.Header().Set("Content-type", "application/json; charset=utf-8")
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(d.data())
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
