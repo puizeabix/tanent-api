@@ -2,29 +2,34 @@ package account
 
 import (
 	"context"
+	"time"
 
 	"github.com/go-kit/kit/endpoint"
 )
 
 type Endpoints struct {
-	CreateAccountEndpoint endpoint.Endpoint
-	GetAccountEndpoint    endpoint.Endpoint
-	UpdateAccountEndpoint endpoint.Endpoint
-	ListAccountsEndpoint  endpoint.Endpoint
+	CreateAccountEndpoint   endpoint.Endpoint
+	GetAccountEndpoint      endpoint.Endpoint
+	UpdateAccountEndpoint   endpoint.Endpoint
+	ListAccountsEndpoint    endpoint.Endpoint
+	ActivateAccountEndpoint endpoint.Endpoint
+	DeactiveAccountEndpoint endpoint.Endpoint
 }
 
 func MakeEndpoints(s Service) Endpoints {
 	return Endpoints{
-		CreateAccountEndpoint: makeCreateAccountEndpoint(s),
-		GetAccountEndpoint:    makeGetAccountEndpoint(s),
-		UpdateAccountEndpoint: makeUpdateAccountEndpoint(s),
-		ListAccountsEndpoint:  makeListAccountsEndpoint(s),
+		CreateAccountEndpoint:   makeCreateAccountEndpoint(s),
+		GetAccountEndpoint:      makeGetAccountEndpoint(s),
+		UpdateAccountEndpoint:   makeUpdateAccountEndpoint(s),
+		ListAccountsEndpoint:    makeListAccountsEndpoint(s),
+		ActivateAccountEndpoint: makeActiveAccountEndpoint(s),
+		DeactiveAccountEndpoint: makeDeactivateAccountEndpoint(s),
 	}
 
 }
 
 type createAccountRequest struct {
-	Account
+	Name string
 }
 
 type createAccountResponse struct {
@@ -37,7 +42,13 @@ func (r createAccountResponse) error() error { return r.Err }
 func makeCreateAccountEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(createAccountRequest)
-		id, err := s.CreateAccount(ctx, req.Account)
+		acc := Account{
+			Name:     req.Name,
+			IsActive: true,
+			Created:  time.Now(),
+			Modified: time.Now(),
+		}
+		id, err := s.CreateAccount(ctx, acc)
 		return createAccountResponse{Id: id, Err: err}, err
 	}
 }
@@ -95,5 +106,41 @@ func makeListAccountsEndpoint(s Service) endpoint.Endpoint {
 	return func(ctx context.Context, _ interface{}) (interface{}, error) {
 		accs, err := s.ListAccounts(ctx)
 		return listAccountsResponse{Accounts: accs, Err: err}, err
+	}
+}
+
+type activateAccountRequest struct {
+	Id string
+}
+
+type activateAccountResponse struct {
+	Err error `json:"err,omitempty"`
+}
+
+func (r activateAccountResponse) error() error { return r.Err }
+
+func makeActiveAccountEndpoint(s Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(activateAccountRequest)
+		err := s.ActivateAccount(ctx, req.Id)
+		return activateAccountResponse{Err: err}, err
+	}
+}
+
+type deactivateAccountRequest struct {
+	Id string
+}
+
+type deactivateAccountResponse struct {
+	Err error `json:"err,omitempty"`
+}
+
+func (r deactivateAccountResponse) error() error { return r.Err }
+
+func makeDeactivateAccountEndpoint(s Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(deactivateAccountRequest)
+		err := s.DeactivateAccount(ctx, req.Id)
+		return deactivateAccountResponse{Err: err}, err
 	}
 }

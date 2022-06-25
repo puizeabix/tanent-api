@@ -34,10 +34,10 @@ var (
 )
 
 type accountService struct {
-	collection mongo.Collection
+	collection *mongo.Collection
 }
 
-func NewAccountService(c mongo.Collection) Service {
+func NewAccountService(c *mongo.Collection) Service {
 	return &accountService{
 		collection: c,
 	}
